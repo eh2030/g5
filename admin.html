@@ -88,6 +88,17 @@
 </head>
 
 <body>
+<script>
+(function(){
+  try {
+    const u=JSON.parse(localStorage.getItem("currentUser")||"null");
+    if(!u || String(u.role||"").trim().toLowerCase()!=="admin"){
+      location.replace("index.html");
+    }
+  } catch(e) { location.replace("index.html"); }
+})();
+</script>
+
 
 <div class="dashboard">
 
