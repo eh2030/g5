@@ -788,7 +788,7 @@ async function loadReports() {
                 </div>
 
                 <a
-                    href="${escapeAttribute(report.url)}"
+                    href="${escapeAttribute(report.url || report.fileUrl || report.fileURL || report.pdfUrl || report.driveUrl || report.link || report.fileLink || "")}"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="view-btn">
