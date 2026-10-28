@@ -18,6 +18,8 @@
 </style>
 </head>
 <body>
+<script>(function(){try{const u=JSON.parse(localStorage.getItem("currentUser")||"null");if(!u || !["manager","مدير قسم","مديرالقسم"].includes(String(u.role||"").trim().toLowerCase())){location.replace("index.html");}}catch(e){location.replace("index.html");}})();</script>
+
 <script>
 (function(){
   try {
