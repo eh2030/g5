@@ -546,5 +546,5 @@ updateClock();setInterval(updateClock,1000);
 document.getElementById("logoutBtn")?.addEventListener("click",()=>{if(!confirm("هل تريد تسجيل الخروج؟"))return;localStorage.removeItem("currentUser");location.replace("index.html");});
 
 document.querySelectorAll(".menu-card").forEach(x=>x.classList.remove("active"));
-document.querySelector('[data-page="dashboard"]')?.classList.add("active");
-dashboardPage();
+document.querySelector('[data-page="reports"]')?.classList.add("active");
+reportsPage();
