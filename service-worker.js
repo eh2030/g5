@@ -1,9 +1,9 @@
-const CACHE_NAME = 'weekly-reports-v17';
+const CACHE_NAME = 'weekly-reports-v18';
 const APP_SHELL = [
   './','./index.html','./employee.html','./admin.html','./manager.html',
   './css/variables.css','./css/theme.css','./css/animations.css','./css/login.css','./css/login-modern.css','./css/employee.css','./css/employee-modern.css','./css/employee-v4.css','./css/employee-dashboard.css','./css/employee-layout-fix.css','./css/dialogs.css','./css/employee-pdf-modal.css','./css/logout-modal.css','./css/pwa.css',
   './js/config.js','./js/api.js','./js/auth.js','./js/employee.js','./js/employee-pdf-viewer.js','./js/employee-dashboard.js','./js/dialogs.js','./js/logout-modal.js','./js/pwa.js',
-  './assets/logo.png','./assets/login-bg.svg','./manifest.webmanifest'
+  './assets/Logo.png','./assets/login-background.webp','./manifest.webmanifest'
 ];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
