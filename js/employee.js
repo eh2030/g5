@@ -748,9 +748,15 @@ async function loadReports() {
 
     let html = "";
 
-    result.reports.forEach(report => {
+    const sortedReports = result.reports.slice().sort((a,b) => {
+        const da = parseReportUploadDate(a.uploadDate || a.date || a.createdAt);
+        const db = parseReportUploadDate(b.uploadDate || b.date || b.createdAt);
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
 
-        const date = parseReportUploadDate(report.uploadDate);
+    sortedReports.forEach(report => {
+
+        const date = parseReportUploadDate(report.uploadDate || report.date || report.createdAt);
 
         const reportDate = date
             ? date.toLocaleString("ar-EG", {
