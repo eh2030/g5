@@ -310,7 +310,7 @@ async function employeesPage(){
 
     content.innerHTML=`<div class="section-title"><div><span class="eyebrow">إدارة النظام</span><h2><i class="fa-solid fa-users"></i> المعلمون</h2><p>إدارة المعلمين وحسابات الدخول والحالات.</p></div><button class="primary-btn" id="addEmployeeBtn"><i class="fa-solid fa-plus"></i> إضافة معلم</button></div>
     <div class="toolbar"><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="employeeSearch" placeholder="بحث باسم المعلم أو اسم المستخدم أو القسم"></div><select id="employeeDepartment"><option value="">كل الأقسام</option>${departments.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select><select id="employeeRole"><option value="">كل الصلاحيات</option><option value="employee">موظف</option><option value="manager">مدير قسم</option><option value="admin">مدير عام</option></select></div>
-    <div class="table-container"><table><thead><tr><th>#</th><th>اسم المعلم</th><th>المرحلة</th><th>القسم</th><th>اسم المستخدم</th><th>الصلاحية</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="employeesBody"></tbody></table></div>`;
+    <div class="table-container"><table><thead><tr><th>#</th><th>اسم المعلم</th><th>المرحلة</th><th>الوظيفة</th><th>اسم المستخدم</th><th>الصلاحية</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="employeesBody"></tbody></table></div>`;
 
     document.getElementById("addEmployeeBtn").onclick=()=>openEmployeeModal();
     const render=()=>{
@@ -348,20 +348,57 @@ async function reportsPage(){
     reportsData=Array.isArray(result.reports)?result.reports:[];
     const employees=Array.isArray(er?.employees)?er.employees:[];
     const employeeById=new Map(employees.map(e=>[employeeIdKey(e.id),e]));
-    const stageOf=r=>String(r.stage||employeeById.get(employeeIdKey(r.employeeId))?.stage||"—").trim()||"—";
-    const deptOf=r=>String(r.department||employeeById.get(employeeIdKey(r.employeeId))?.department||"—").trim()||"—";
+    const employeeOf=r=>employeeById.get(employeeIdKey(r.employeeId))||{};
+    const normalizeStageName=value=>{
+        const n=normalizeText(value);
+        const map=[
+            ["المرحلة الابتدائيه","المرحلة الابتدائية"],["الابتدائيه","المرحلة الابتدائية"],["الابتدائية","المرحلة الابتدائية"],["ابتدائي","المرحلة الابتدائية"],
+            ["المرحلة المتوسطه","المرحلة المتوسطة"],["المتوسطة","المرحلة المتوسطة"],["متوسط","المرحلة المتوسطة"],
+            ["المرحلة الثانويه","المرحلة الثانوية"],["الثانوية","المرحلة الثانوية"],["ثانوي","المرحلة الثانوية"],
+            ["الاشراف الاكاديمي","الإشراف الأكاديمي"],["الإشراف الأكاديمي","الإشراف الأكاديمي"],
+            ["الاشراف الاداري","الإشراف الإداري"],["الإشراف الإداري","الإشراف الإداري"],
+            ["التشغيل والصيانه","التشغيل والصيانة"],["التشغيل والصيانة","التشغيل والصيانة"],
+            ["النشاط الطلابي","النشاط الطلابي"]
+        ];
+        const found=map.find(([key])=>normalizeText(key)===n);
+        return found?found[1]:"";
+    };
+    const normalizeJobTitle=value=>{
+        const n=normalizeText(value);
+        const map=[
+            ["الوكيل","الوكيل"],["الموجه","الموجه"],["الموحه","الموجه"],["المشرف","المشرف"],
+            ["مشرف الاكاديمي","مشرف أكاديمي"],["مشرف اكاديمي","مشرف أكاديمي"],
+            ["مشرف الجوده","مشرف الجودة"],["مشرف الجودة","مشرف الجودة"],
+            ["منسق التشغيل والصيانه","منسق التشغيل والصيانة"],["منسق التشغيل والصيانة","منسق التشغيل والصيانة"],
+            ["منسق النشاط الطلابي","منسق النشاط الطلابي"]
+        ];
+        const found=map.find(([key])=>normalizeText(key)===n);
+        return found?found[1]:"";
+    };
+    const stageOf=r=>{
+        const e=employeeOf(r);
+        const candidates=[r.stage,e.stage,r.stageName,e.stageName,r.jobTitle,e.jobTitle,r.position,e.position];
+        for(const value of candidates){const v=normalizeStageName(value);if(v)return v;}
+        return String(r.stage||e.stage||"—").trim()||"—";
+    };
+    const jobTitleOf=r=>{
+        const e=employeeOf(r);
+        const candidates=[r.jobTitle,e.jobTitle,r.position,e.position,r.department,e.department,r.roleTitle,e.roleTitle];
+        for(const value of candidates){const v=normalizeJobTitle(value);if(v)return v;}
+        return String(r.jobTitle||e.jobTitle||r.position||e.position||"—").trim()||"—";
+    };
     const urlOf=r=>String(r.url||r.fileUrl||r.fileURL||r.pdfUrl||r.driveUrl||r.link||r.fileLink||"").trim();
-    const departments=[...new Map(reportsData.map(r=>[normalizeDepartment(deptOf(r)),deptOf(r)]).filter(x=>x[0])).values()];
+    const departments=[...new Map(reportsData.map(r=>[normalizeDepartment(jobTitleOf(r)),jobTitleOf(r)]).filter(x=>x[0])).values()];
     const stages=[...new Set(reportsData.map(stageOf).filter(x=>x&&x!=="—"))];
-    content.innerHTML=`<div class="section-title"><div><span class="eyebrow">المتابعة</span><h2><i class="fa-solid fa-file-pdf"></i> التقارير</h2><p>جميع التقارير في جدول واحد، مع اسم الموظف والمرحلة والقسم وحالة الرفع.</p></div><div class="result-count" id="reportCount"></div></div>
-    <div class="toolbar reports-toolbar"><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchName" placeholder="البحث باسم الموظف أو الملف"></div><select id="searchStage"><option value="">كل المراحل</option>${stages.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("")}</select><select id="searchDepartment"><option value="">كل الأقسام</option>${departments.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select><input id="searchWeek" placeholder="الأسبوع"><input type="date" id="searchDate"><button class="secondary-btn" id="clearReportFilters"><i class="fa-solid fa-rotate-left"></i> مسح</button></div>
+    content.innerHTML=`<div class="section-title"><div><span class="eyebrow">المتابعة</span><h2><i class="fa-solid fa-file-pdf"></i> التقارير</h2><p>جميع التقارير في جدول واحد، مع اسم الموظف والمرحلة والوظيفة وحالة الرفع.</p></div><div class="result-count" id="reportCount"></div></div>
+    <div class="toolbar reports-toolbar"><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchName" placeholder="البحث باسم الموظف أو الملف"></div><select id="searchStage"><option value="">كل المراحل</option>${stages.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("")}</select><select id="searchDepartment"><option value="">كل الوظائف</option>${departments.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select><input id="searchWeek" placeholder="الأسبوع"><input type="date" id="searchDate"><button class="secondary-btn" id="clearReportFilters"><i class="fa-solid fa-rotate-left"></i> مسح</button></div>
     <div class="table-container"><table><thead><tr><th>اسم الموظف</th><th>المرحلة</th><th>القسم</th><th>الأسبوع</th><th>تاريخ الرفع</th><th>الحالة</th><th>عرض التقرير</th><th>حذف</th></tr></thead><tbody id="reportsBody"></tbody></table></div>`;
     const dateOf=r=>parseSystemDate(r.uploadDate||r.date||r.createdAt||r.timestamp);
     const render=()=>{
         const q=normalizeText(document.getElementById("searchName").value),stage=document.getElementById("searchStage").value,dept=normalizeDepartment(document.getElementById("searchDepartment").value),week=normalizeText(document.getElementById("searchWeek").value),date=document.getElementById("searchDate").value;
-        const list=reportsData.filter(r=>(!q||normalizeText(`${r.employeeName||""} ${r.fileName||""}`).includes(q))&&(!stage||stageOf(r)===stage)&&(!dept||normalizeDepartment(deptOf(r))===dept)&&(!week||normalizeText(r.week).includes(week))&&(!date||dateKey(r.uploadDate||r.date||r.createdAt||r.timestamp)===date)).slice().sort((a,b)=>(dateOf(b)?.getTime()||0)-(dateOf(a)?.getTime()||0));
+        const list=reportsData.filter(r=>(!q||normalizeText(`${r.employeeName||""} ${r.fileName||""}`).includes(q))&&(!stage||stageOf(r)===stage)&&(!dept||normalizeDepartment(jobTitleOf(r))===dept)&&(!week||normalizeText(r.week).includes(week))&&(!date||dateKey(r.uploadDate||r.date||r.createdAt||r.timestamp)===date)).slice().sort((a,b)=>(dateOf(b)?.getTime()||0)-(dateOf(a)?.getTime()||0));
         document.getElementById("reportCount").textContent=`${list.length} تقرير`;
-        document.getElementById("reportsBody").innerHTML=list.length?list.map(r=>`<tr><td><strong>${esc(r.employeeName||employeeById.get(employeeIdKey(r.employeeId))?.name||"—")}</strong></td><td>${esc(stageOf(r))}</td><td>${esc(deptOf(r))}</td><td>${esc(r.week||"—")}</td><td>${esc(formatDate(r.uploadDate||r.date||r.createdAt||r.timestamp))}</td><td><span class="report-status">${esc(r.status||"تم الرفع")}</span></td><td><button class="view-btn" type="button" data-view-report="${esc(r.id)}"><i class="fa-solid fa-eye"></i> عرض</button></td><td><button class="icon-btn delete-btn" type="button" data-delete-report="${esc(r.id)}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):`<tr><td colspan="8"><div class="table-empty">لا توجد تقارير مطابقة</div></td></tr>`;
+        document.getElementById("reportsBody").innerHTML=list.length?list.map(r=>`<tr><td><strong>${esc(r.employeeName||employeeById.get(employeeIdKey(r.employeeId))?.name||"—")}</strong></td><td>${esc(stageOf(r))}</td><td>${esc(jobTitleOf(r))}</td><td>${esc(r.week||"—")}</td><td>${esc(formatDate(r.uploadDate||r.date||r.createdAt||r.timestamp))}</td><td><span class="report-status">تم الرفع</span></td><td><button class="view-btn" type="button" data-view-report="${esc(r.id)}"><i class="fa-solid fa-eye"></i> عرض</button></td><td><button class="icon-btn delete-btn" type="button" data-delete-report="${esc(r.id)}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):`<tr><td colspan="8"><div class="table-empty">لا توجد تقارير مطابقة</div></td></tr>`;
         document.querySelectorAll("[data-view-report]").forEach(btn=>btn.addEventListener("click",()=>{const r=reportsData.find(x=>String(x.id)===btn.dataset.viewReport);if(r)openPdf(urlOf(r),"تقرير "+(r.employeeName||""));}));
         document.querySelectorAll("[data-delete-report]").forEach(btn=>btn.addEventListener("click",()=>deleteReport(btn.dataset.deleteReport)));
     };
