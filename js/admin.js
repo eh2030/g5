@@ -388,8 +388,8 @@ async function saveEmployee(){
         alert("يرجى إدخال الرقم السري للمعلم الجديد.");
         return;
     }
-    if(password && password.length<12){
-        alert("الرقم السري يجب ألا يقل عن 12 حرفًا.");
+    if(password && (password.length<4 || password.length>12)){
+        alert("الرقم السري يجب أن يكون من 4 إلى 12 حرفًا.");
         return;
     }
 
