@@ -365,7 +365,8 @@ function openEmployeeModal(){
     const modal=document.getElementById("employeeModal");
     if(!modal) return;
     const title=document.querySelector(".modal-title"); if(title) title.textContent="إضافة معلم";
-    ["empName","empStage","empDepartment","empUsername","empPassword"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});\n    populateJobOptions("");
+    ["empName","empStage","empDepartment","empUsername","empPassword"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+    populateJobOptions("");
     modal.classList.add("show");
 }
 
