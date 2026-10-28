@@ -41,7 +41,13 @@ function employeeIdKey(value){return String(value??"").trim();}
 function getCurrentWeek(){const d=new Date(),m=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"],w=["الأول","الثاني","الثالث","الرابع","الخامس"];return `الأسبوع ${w[Math.ceil(d.getDate()/7)-1]} - ${m[d.getMonth()]}`;}
 function formatDate(v){const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString("ar-EG",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:true});}
 function previewUrl(url){const v=String(url||"");const m=v.match(/\/file\/d\/([^/]+)/);if(m)return `https://drive.google.com/file/d/${m[1]}/preview`;const q=v.match(/[?&]id=([^&]+)/);if(q)return `https://drive.google.com/file/d/${q[1]}/preview`;return v;}
-function openPdf(url,title="عرض التقرير"){const modal=document.getElementById("pdfModal"),frame=document.getElementById("pdfFrame"),titleEl=document.getElementById("pdfModalTitle");if(!modal||!frame){window.open(url,"_blank");return;}if(titleEl)titleEl.textContent=title;frame.src=previewUrl(url);modal.classList.add("show");modal.setAttribute("aria-hidden","false");}
+function openPdf(url,title="عرض التقرير"){
+    const target=String(url||"").trim();
+    if(!target){alert("رابط التقرير غير متاح. يرجى التواصل مع مسؤول النظام.");return;}
+    // فتح ملف Drive مباشرة يتجنب شاشة المعاينة البيضاء الناتجة عن منع iframe.
+    const opened=window.open(target,"_blank","noopener,noreferrer");
+    if(!opened) window.location.href=target;
+}
 function closePdf(){const modal=document.getElementById("pdfModal"),frame=document.getElementById("pdfFrame");if(!modal)return;modal.classList.remove("show");modal.setAttribute("aria-hidden","true");if(frame)frame.src="about:blank";}
 window.openPdf=openPdf;
 
