@@ -18,6 +18,17 @@
 </style>
 </head>
 <body>
+<script>
+(function(){
+  try {
+    const u=JSON.parse(localStorage.getItem("currentUser")||"null");
+    if(!u || !["manager","مدير قسم","مديرالقسم"].includes(String(u.role||"").trim().toLowerCase())){
+      location.replace("index.html");
+    }
+  } catch(e) { location.replace("index.html"); }
+})();
+</script>
+
 <div class="dashboard">
 <header class="header"><div class="header-right"><img src="assets/logo.png" class="logo" alt="Logo"><div><h2>لوحة مدير القسم</h2><span id="managerName">مدير القسم</span><small id="departmentName">القسم</small></div></div><div class="header-left"><div id="currentTime"></div><div id="currentDate"></div><div class="header-actions" aria-label="إجراءات الصفحة"><button id="refreshBtn" class="header-action-btn" type="button" title="تحديث البيانات" aria-label="تحديث البيانات"><i class="fa-solid fa-rotate"></i></button><button id="themeBtn" class="header-action-btn" type="button" title="الوضع الداكن" aria-label="تفعيل الوضع الداكن"><i class="fa-solid fa-moon"></i></button><button id="logoutBtn" class="header-action-btn logout-action" type="button" title="تسجيل الخروج" aria-label="تسجيل الخروج"><i class="fa-solid fa-right-from-bracket"></i></button></div></div></header>
 <section class="menu"><button class="menu-card active" data-page="dashboard"><i class="fa-solid fa-chart-pie"></i><span>لوحة القسم</span></button><button class="menu-card" data-page="employees"><i class="fa-solid fa-users"></i><span>الموظفون</span></button><button class="menu-card" data-page="reports"><i class="fa-solid fa-file-pdf"></i><span>التقارير</span></button></section>
