@@ -19,6 +19,17 @@
 @media(max-width:620px){.employee-actions{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.employee-action-btn{width:100%!important;height:40px!important}.employee-meta{grid-template-columns:1fr 1fr!important}.employee-meta .employee-actions{grid-column:1 / -1}}
 </style>
 </head><body>
+<script>
+(function(){
+  try {
+    const u=JSON.parse(localStorage.getItem("currentUser")||"null");
+    if(!u || String(u.role||"").trim().toLowerCase()!=="employee"){
+      location.replace("index.html");
+    }
+  } catch(e) { location.replace("index.html"); }
+})();
+</script>
+
 <div class="employee-container">
 <header class="employee-header"><div class="employee-brand"><img src="assets/Logo.png" class="logo" alt="شعار الجمعية"><div class="employee-info"><span class="welcome-label">مرحباً بك في نظام التقارير</span><h1 id="employeeName">اسم الموظف</h1><span id="employeeDepartment">القسم</span></div></div><div class="employee-meta"><div class="meta-item"><i class="fa-regular fa-calendar"></i><div><small>اليوم</small><strong id="todayDate">--</strong></div></div><div class="meta-item"><i class="fa-solid fa-calendar-week"></i><div><small>الأسبوع الحالي</small><strong id="weekNumber">--</strong></div></div><div class="employee-actions" aria-label="إجراءات الصفحة"><button id="refreshBtn" class="employee-action-btn refresh-btn" type="button" title="تحديث البيانات" aria-label="تحديث البيانات"><i class="fa-solid fa-rotate"></i></button><button id="themeBtn" class="employee-action-btn theme-action" type="button" title="الوضع الداكن" aria-label="تفعيل الوضع الداكن"><i class="fa-solid fa-moon"></i></button><button id="logoutBtn" class="employee-action-btn logout-action" type="button" title="تسجيل الخروج" aria-label="تسجيل الخروج"><i class="fa-solid fa-right-from-bracket"></i></button></div></div></header>
 <main>
