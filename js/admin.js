@@ -321,7 +321,7 @@ async function employeesPage(){
             const text=normalizeText(`${e.name||""} ${e.stage||""} ${e.username||""} ${e.department||""} ${e.jobTitle||""}`);
             return (!q||text.includes(q)) && (!dept||normalizeDepartment(e.department)===dept) && (!role||normalizeRole(e.role)===role);
         });
-        document.getElementById("employeesBody").innerHTML=list.length?list.map(e=>`<tr><td>${esc(e.id)}</td><td><strong>${esc(e.name||"—")}</strong></td><td>${esc(e.stage||"—")}</td><td>${esc(e.department||e.jobTitle||"—")}</td><td dir="ltr">${esc(e.username)}</td><td><span class="role-badge ${normalizeRole(e.role)}">${roleLabel(e.role)}</span></td><td><span class="status ${isActive(e.status)?"active":"stop"}">${isActive(e.status)?"نشط":"موقوف"}</span></td><td><div class="actions"><button type="button" class="icon-btn edit-btn" data-action="edit-employee" data-id="${esc(e.id)}" title="تعديل المعلم"><i class="fa-solid fa-pen"></i></button><button type="button" class="icon-btn delete-btn" data-action="delete-employee" data-id="${esc(e.id)}" title="حذف المعلم"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join(""):`<tr><td colspan="8"><div class="table-empty">لا توجد نتائج مطابقة</div></td></tr>`;
+        document.getElementById("employeesBody").innerHTML=list.length?list.map(e=>`<tr><td>${esc(e.id)}</td><td><strong>${esc(e.name||"—")}</strong></td><td>${esc(e.stage||"—")}</td><td>${esc(e.jobTitle||e.department||"—")}</td><td dir="ltr">${esc(e.username)}</td><td><span class="role-badge ${normalizeRole(e.role)}">${roleLabel(e.role)}</span></td><td><span class="status ${isActive(e.status)?"active":"stop"}">${isActive(e.status)?"نشط":"موقوف"}</span></td><td><div class="actions"><button type="button" class="icon-btn edit-btn" data-action="edit-employee" data-id="${esc(e.id)}" title="تعديل المعلم"><i class="fa-solid fa-pen"></i></button><button type="button" class="icon-btn delete-btn" data-action="delete-employee" data-id="${esc(e.id)}" title="حذف المعلم"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join(""):`<tr><td colspan="8"><div class="table-empty">لا توجد نتائج مطابقة</div></td></tr>`;
     };
     document.getElementById("employeeSearch").addEventListener("input",render);
     document.getElementById("employeeDepartment").addEventListener("change",render);
@@ -329,12 +329,43 @@ async function employeesPage(){
     render(); setupEmployeeModal();
 }
 
+const JOBS_BY_STAGE = {
+    "المرحلة الابتدائية": ["الوكيل", "الموجه", "المشرف"],
+    "المرحلة المتوسطة": ["الوكيل", "الموجه", "المشرف"],
+    "المرحلة الثانوية": ["الوكيل", "الموجه", "المشرف"],
+    "الإشراف الأكاديمي": ["مشرف أكاديمي"],
+    "الإشراف الإداري": ["مشرف الجودة"],
+    "التشغيل والصيانة": ["منسق التشغيل والصيانة"],
+    "النشاط الطلابي": ["منسق النشاط الطلابي"]
+};
+
+function canonicalStage(value) {
+    const n = normalizeText(value);
+    return Object.keys(JOBS_BY_STAGE).find(stage => normalizeText(stage) === n) || "";
+}
+
+function populateJobOptions(stage, selected = "") {
+    const select = document.getElementById("empDepartment");
+    if (!select) return;
+    const jobs = JOBS_BY_STAGE[stage] || [];
+    select.innerHTML = '<option value="">اختر الوظيفة</option>' +
+        jobs.map(job => '<option value="' + esc(job) + '">' + esc(job) + '</option>').join("");
+    if (selected && !jobs.some(job => normalizeText(job) === normalizeText(selected))) {
+        select.add(new Option(selected, selected));
+    }
+    select.value = selected || "";
+}
+
+document.getElementById("empStage")?.addEventListener("change", event => {
+    populateJobOptions(canonicalStage(event.target.value));
+});
+
 function openEmployeeModal(){
     editingEmployeeId=null;
     const modal=document.getElementById("employeeModal");
     if(!modal) return;
     const title=document.querySelector(".modal-title"); if(title) title.textContent="إضافة معلم";
-    ["empName","empStage","empDepartment","empUsername","empPassword"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+    ["empName","empStage","empDepartment","empUsername","empPassword"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});\n    populateJobOptions("");
     modal.classList.add("show");
 }
 
