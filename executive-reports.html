@@ -16,6 +16,18 @@
 <link rel="stylesheet" href="css/variables.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/executive-reports.css?v=3"><link rel="stylesheet" href="css/pwa.css?v=3">
 </head>
 <body>
+<script>
+(function(){
+  try {
+    const u=JSON.parse(localStorage.getItem("currentUser")||"null");
+    const role=String(u&&u.role||"").trim().toLowerCase();
+    if(!u || !["admin","manager","مدير قسم","مديرالقسم"].includes(role)){
+      location.replace("index.html");
+    }
+  } catch(e) { location.replace("index.html"); }
+})();
+</script>
+
 <div class="executive-app">
 <header class="executive-header">
   <div class="header-brand"><img src="assets/logo.png" alt="شعار الجمعية"><div><strong>مركز التقارير لموظفو الجمعية</strong><span>عرض ومتابعة تقارير جميع الأقسام</span></div></div>
