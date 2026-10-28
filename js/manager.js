@@ -44,9 +44,13 @@ function previewUrl(url){const v=String(url||"");const m=v.match(/\/file\/d\/([^
 function openPdf(url,title="عرض التقرير"){
     const target=String(url||"").trim();
     if(!target){alert("رابط التقرير غير متاح. يرجى التواصل مع مسؤول النظام.");return;}
-    // فتح ملف Drive مباشرة يتجنب شاشة المعاينة البيضاء الناتجة عن منع iframe.
-    const opened=window.open(target,"_blank","noopener,noreferrer");
-    if(!opened) window.location.href=target;
+    const modal=document.getElementById("pdfModal"),frame=document.getElementById("pdfFrame"),titleEl=document.getElementById("pdfModalTitle");
+    if(!modal||!frame){window.open(target,"_blank","noopener,noreferrer");return;}
+    const fileMatch=target.match(/\/file\/d\/([^/]+)/),idMatch=target.match(/[?&]id=([^&]+)/);
+    const fileId=fileMatch?fileMatch[1]:(idMatch?idMatch[1]:"");
+    frame.src=fileId?`https://drive.google.com/file/d/${fileId}/preview`:target;
+    if(titleEl)titleEl.textContent=title;
+    modal.classList.add("show");modal.setAttribute("aria-hidden","false");
 }
 function closePdf(){const modal=document.getElementById("pdfModal"),frame=document.getElementById("pdfFrame");if(!modal)return;modal.classList.remove("show");modal.setAttribute("aria-hidden","true");if(frame)frame.src="about:blank";}
 window.openPdf=openPdf;
