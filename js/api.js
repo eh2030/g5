@@ -1,7 +1,7 @@
 /* ==========================================
    Weekly Reports System
    API Service
-   School database connection
+   Single Apps Script connection
 ========================================== */
 
 const apiInFlight = new Map();
@@ -10,17 +10,12 @@ let apiSettingsCacheAt = 0;
 const API_SETTINGS_TTL = 30000;
 
 /**
- * تحديد رابط API الأساسي لنظام التقارير.
- * رابط المدرسة خيار احتياطي عند عدم توفر الرابط الأساسي.
+ * كل طلبات المنصة تمر عبر رابط Apps Script المعتمد فقط.
  */
 function getApiEndpoint() {
-    return (
-        (typeof CONFIG !== "undefined" &&
-            CONFIG.API_URL) ||
-        (typeof CONFIG !== "undefined" &&
-            CONFIG.SCHOOL_DATABASE_API_URL) ||
-        ""
-    );
+    return typeof CONFIG !== "undefined" && CONFIG.API_URL
+        ? CONFIG.API_URL
+        : "";
 }
 
 /**
@@ -66,7 +61,7 @@ async function api(action, data = {}) {
 
     if (!endpoint) {
         throw new Error(
-            "رابط قاعدة البيانات غير مضبوط في CONFIG."
+            "رابط Apps Script غير مضبوط في CONFIG."
         );
     }
 
