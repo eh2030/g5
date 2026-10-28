@@ -10,15 +10,15 @@ let apiSettingsCacheAt = 0;
 const API_SETTINGS_TTL = 30000;
 
 /**
- * تحديد رابط API الخاص بقاعدة بيانات المدرسة.
- * يُفضّل رابط المدرسة على الرابط القديم.
+ * تحديد رابط API الأساسي لنظام التقارير.
+ * رابط المدرسة خيار احتياطي عند عدم توفر الرابط الأساسي.
  */
 function getApiEndpoint() {
     return (
         (typeof CONFIG !== "undefined" &&
-            CONFIG.SCHOOL_DATABASE_API_URL) ||
-        (typeof CONFIG !== "undefined" &&
             CONFIG.API_URL) ||
+        (typeof CONFIG !== "undefined" &&
+            CONFIG.SCHOOL_DATABASE_API_URL) ||
         ""
     );
 }
