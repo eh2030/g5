@@ -427,15 +427,30 @@ async function saveEmployee(){
 
 function editEmployee(id){
     const employee=employeesData.find(e=>String(e.id)===String(id));
-    if(!employee)return;
+    if(!employee){
+        alert("لم أجد بيانات هذا الموظف في القائمة. حدّث الصفحة وحاول مرة أخرى.");
+        return;
+    }
     editingEmployeeId=employee.id;
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v??"";};
     set("empName",employee.name);
-    set("empStage",employee.stage);
-    set("empDepartment",employee.department||employee.jobTitle);
+    const setSelect=(id,value)=>{
+        const el=document.getElementById(id);
+        if(!el) return;
+        const v=String(value??"");
+        if(v && ![...el.options].some(option=>option.value===v)) el.add(new Option(v,v));
+        el.value=v;
+    };
+    setSelect("empStage",employee.stage);
+    setSelect("empDepartment",employee.department||employee.jobTitle);
     set("empUsername",employee.username);
     set("empPassword","");
     const title=document.querySelector(".modal-title");if(title)title.textContent="تعديل بيانات المعلم";
+    const passwordInput=document.getElementById("empPassword");
+    if(passwordInput){
+        passwordInput.required=false;
+        passwordInput.placeholder="اتركه فارغًا للاحتفاظ بالرقم السري الحالي";
+    }
     document.getElementById("employeeModal")?.classList.add("show");
 }
 window.editEmployee=editEmployee;
