@@ -6,7 +6,7 @@
   const banner = document.createElement('div');
   banner.id = 'pwaInstallBanner';
   banner.innerHTML = `
-    <div class="pwa-install-icon"><img src="assets/logo.png" alt=""></div>
+    <div class="pwa-install-icon"><img src="assets/Logo.png?v=2" alt="شعار مدارس الاعتصام الأهلية"></div>
     <div class="pwa-install-content">
       <strong>ثبّت تطبيق التقارير</strong>
       <span id="pwaInstallHint">وصول سريع للنظام من شاشة جهازك</span>
@@ -25,16 +25,14 @@
     if (!document.getElementById('pwaInstallBanner')) document.body.appendChild(banner);
   };
 
-  // Android/Chrome: show the notice only when the browser confirms that the app can be installed.
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredPrompt = e;
     show();
   });
 
-  // iPhone/iPad Safari has no beforeinstallprompt, so show a small instruction notice.
   if (isIOS && isSafari) {
-    hint.textContent = 'من Safari اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية»';
+    hint.textContent = 'للتثبيت: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية»';
     action.textContent = 'التعليمات';
     setTimeout(show, 900);
   }
@@ -47,7 +45,7 @@
       banner.remove();
       return;
     }
-    if (isIOS) alert('من Safari اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية».');
+    if (isIOS) alert('لتثبيت التطبيق على iPhone أو iPad: افتح الصفحة في Safari، واضغط زر المشاركة، ثم اختر «إضافة إلى الشاشة الرئيسية»، وبعدها اضغط «إضافة».');
   });
 
   banner.querySelector('#pwaInstallClose').addEventListener('click', () => {
