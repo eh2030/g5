@@ -441,9 +441,28 @@ function editEmployee(id){
 window.editEmployee=editEmployee;
 
 async function deleteEmployee(id){
-    if(!confirm("هل تريد حذف هذا المعلم؟"))return;
-    const result=await api("deleteEmployee",{id});
-    if(result.success){await employeesPage();alert("تم حذف المعلم بنجاح");}else alert(result.message||"تعذر حذف الموظف");
+    if(id===undefined || id===null || String(id).trim()===""){
+        alert("تعذر تحديد رقم الموظف. حدّث صفحة الإدارة وحاول مرة أخرى.");
+        return;
+    }
+    if(!confirm("هل تريد حذف هذا المعلم؟")) return;
+
+    const buttons=[...document.querySelectorAll(".delete-btn")];
+    buttons.forEach(button=>button.disabled=true);
+    try{
+        const result=await api("deleteEmployee",{id:String(id)});
+        if(!result || result.success!==true){
+            alert((result&&result.message)||"لم يؤكد الخادم حذف الموظف. لم يتم تحديث القائمة.");
+            return;
+        }
+        await employeesPage();
+        alert("تم حذف المعلم بنجاح");
+    }catch(error){
+        console.error("deleteEmployee failed:",error);
+        alert("فشل حذف المعلم: "+(error.message||String(error))+"\nتحقق من نشر آخر إصدار من Code.gs ومن صلاحية المدير العام.");
+    }finally{
+        document.querySelectorAll(".delete-btn").forEach(button=>button.disabled=false);
+    }
 }
 window.deleteEmployee=deleteEmployee;
 
