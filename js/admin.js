@@ -100,10 +100,25 @@ function sameWeek(a,b){
     return normalizeText(a)===normalizeText(b);
 }
 
+function parseSystemDate(value){
+    if(value===null||value===undefined||value==="")return null;
+    if(typeof value==="number"||/^\d+(\.\d+)?$/.test(String(value).trim())){
+        const n=Number(value);
+        if(n>100000000000){const d=new Date(n);return Number.isNaN(d.getTime())?null:d;}
+        if(n>20000&&n<100000){const d=new Date(Date.UTC(1899,11,30)+n*86400000);return Number.isNaN(d.getTime())?null:d;}
+    }
+    const s=String(value).trim().replace(/[٠-٩]/g,x=>String("٠١٢٣٤٥٦٧٨٩".indexOf(x))).replace(/[۰-۹]/g,x=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(x)));
+    let d=new Date(s);if(!Number.isNaN(d.getTime()))return d;
+    const m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?$/i);
+    if(!m)return null;
+    const day=+m[1],month=+m[2]-1,year=+m[3];let hour=+(m[4]||0);const minute=+(m[5]||0),second=+(m[6]||0),period=String(m[7]||"").toUpperCase();
+    if(period==="PM"||period==="م")hour=hour%12+12;else if(period==="AM"||period==="ص")hour%=12;
+    d=new Date(year,month,day,hour,minute,second);
+    return d.getFullYear()===year&&d.getMonth()===month&&d.getDate()===day?d:null;
+}
 function formatDate(value){
-    const d=new Date(value);
-    if(Number.isNaN(d.getTime())) return "—";
-    return d.toLocaleString("ar-EG",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:true});
+    const d=parseSystemDate(value);
+    return d?d.toLocaleString("ar-EG",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:true}):"—";
 }
 
 function dateKey(value){
@@ -327,22 +342,32 @@ function openEmployeeModal(){
    Reports
 ========================== */
 async function reportsPage(){
-    const result=await api("getReports",{role:"admin"});
-    if(!result.success){ content.innerHTML=`<div class="empty-card">تعذر تحميل التقارير</div>`; return; }
+    content.innerHTML='<div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i><span>جارٍ تحميل التقارير...</span></div>';
+    const [result, er]=await Promise.all([api("getReports",{role:"admin"}),api("getEmployees")]);
+    if(!result?.success){content.innerHTML='<div class="empty-card">تعذر تحميل التقارير</div>';return;}
     reportsData=Array.isArray(result.reports)?result.reports:[];
-    const departments=[...new Map(reportsData.map(r=>[normalizeDepartment(r.department),String(r.department||"").trim()]).filter(x=>x[0])).values()];
-    content.innerHTML=`<div class="section-title"><div><span class="eyebrow">المتابعة</span><h2><i class="fa-solid fa-file-pdf"></i> التقارير</h2><p>المدير العام يرى جميع التقارير.</p></div><div class="result-count" id="reportCount"></div></div>
-    <div class="toolbar reports-toolbar"><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchName" placeholder="البحث باسم الموظف أو الملف"></div><select id="searchDepartment"><option value="">كل الأقسام</option>${departments.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("")}</select><input id="searchWeek" placeholder="الأسبوع"><input type="date" id="searchDate"><button class="secondary-btn" id="clearReportFilters"><i class="fa-solid fa-rotate-left"></i> مسح</button></div>
-    <div class="table-container"><table><thead><tr><th>الموظف</th><th>القسم</th><th>الأسبوع</th><th>تاريخ الرفع</th><th>الحالة</th><th>عرض</th><th>حذف</th></tr></thead><tbody id="reportsBody"></tbody></table></div>`;
+    const employees=Array.isArray(er?.employees)?er.employees:[];
+    const employeeById=new Map(employees.map(e=>[employeeIdKey(e.id),e]));
+    const stageOf=r=>String(r.stage||employeeById.get(employeeIdKey(r.employeeId))?.stage||"غير محددة").trim()||"غير محددة";
+    const deptOf=r=>String(r.department||employeeById.get(employeeIdKey(r.employeeId))?.department||"بدون قسم").trim()||"بدون قسم";
+    const dateOf=r=>parseSystemDate(r.uploadDate||r.date||r.createdAt||r.timestamp);
+    const urlOf=r=>String(r.url||r.fileUrl||r.fileURL||r.pdfUrl||r.driveUrl||r.link||r.fileLink||"").trim();
+    content.innerHTML=`<div class="section-title"><div><span class="eyebrow">المتابعة</span><h2><i class="fa-solid fa-file-pdf"></i> التقارير</h2><p>المرحلة ← القسم ← الموظف، مع إظهار أحدث رفع أولًا.</p></div><div class="result-count" id="reportCount"></div></div>
+    <div class="toolbar reports-toolbar"><div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchName" placeholder="البحث باسم الموظف أو الملف"></div><input id="searchWeek" placeholder="الأسبوع"><input type="date" id="searchDate"><button class="secondary-btn" id="clearReportFilters"><i class="fa-solid fa-rotate-left"></i> مسح</button></div><div id="adminReportTree" class="admin-report-tree"></div>`;
     const render=()=>{
-        const q=normalizeText(document.getElementById("searchName").value),dept=normalizeDepartment(document.getElementById("searchDepartment").value),week=normalizeText(document.getElementById("searchWeek").value),date=document.getElementById("searchDate").value;
-        const list=reportsData.filter(r=>(!q||normalizeText(`${r.employeeName||""} ${r.fileName||""}`).includes(q))&&(!dept||normalizeDepartment(r.department)===dept)&&(!week||normalizeText(r.week).includes(week))&&(!date||dateKey(r.uploadDate)===date));
+        const q=normalizeText(document.getElementById("searchName").value),week=normalizeText(document.getElementById("searchWeek").value),date=document.getElementById("searchDate").value;
+        const list=reportsData.filter(r=>(!q||normalizeText(`${r.employeeName||""} ${r.fileName||""}`).includes(q))&&(!week||normalizeText(r.week).includes(week))&&(!date||dateKey(r.uploadDate||r.date||r.createdAt)===date));
         document.getElementById("reportCount").textContent=`${list.length} تقرير`;
-        document.getElementById("reportsBody").innerHTML=list.length?list.map(r=>`<tr><td><strong>${esc(r.employeeName)}</strong></td><td>${esc(r.department)}</td><td>${esc(r.week)}</td><td>${formatDate(r.uploadDate)}</td><td><span class="report-status">${esc(r.status||"تم الرفع")}</span></td><td><button class="view-btn" onclick='openPdf(${JSON.stringify(String(r.url||""))},${JSON.stringify("تقرير "+String(r.employeeName||""))})'><i class="fa-solid fa-eye"></i> عرض</button></td><td><button class="icon-btn delete-btn" onclick="deleteReport(${JSON.stringify(r.id)})"><i class="fa-solid fa-trash"></i></button></td></tr>`).join(""):`<tr><td colspan="7"><div class="table-empty">لا توجد تقارير مطابقة</div></td></tr>`;
+        const stages=new Map();
+        list.forEach(r=>{const stage=stageOf(r),dept=deptOf(r),id=employeeIdKey(r.employeeId)||normalizeText(r.employeeName||"غير معروف");if(!stages.has(stage))stages.set(stage,new Map());const ds=stages.get(stage);if(!ds.has(dept))ds.set(dept,new Map());const es=ds.get(dept);if(!es.has(id))es.set(id,{name:r.employeeName||employeeById.get(id)?.name||"موظف",reports:[]});es.get(id).reports.push(r);});
+        const byDate=(a,b)=>(dateOf(b)?.getTime()||0)-(dateOf(a)?.getTime()||0);
+        const html=[...stages.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([stage,ds])=>`<details class="admin-stage-group" open><summary><i class="fa-solid fa-school"></i> ${esc(stage)} <span>${[...ds.values()].reduce((n,es)=>n+es.size,0)} موظف</span></summary><div class="admin-stage-content">${[...ds.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ar")).map(([dept,es])=>`<details class="admin-department-group" open><summary><i class="fa-solid fa-building"></i> ${esc(dept)} <span>${es.size} موظف</span></summary><div class="admin-department-content">${[...es.entries()].sort((a,b)=>String(a[1].name).localeCompare(String(b[1].name),"ar")).map(([id,e])=>{const rs=e.reports.slice().sort(byDate),latest=rs[0];return `<details class="admin-employee-group"><summary><i class="fa-solid fa-user"></i> ${esc(e.name)} <span>${rs.length} تقرير</span><small>آخر رفع: ${esc(latest?formatDate(latest.uploadDate||latest.date||latest.createdAt):"—")}</small></summary><div class="admin-employee-reports">${rs.map(r=>`<div class="admin-report-row"><div><strong>${esc(r.week||"تقرير أسبوعي")}</strong><small>${esc(r.fileName||"ملف PDF")} · ${esc(formatDate(r.uploadDate||r.date||r.createdAt))}</small></div><span class="report-status">${esc(r.status||"تم الرفع")}</span><button class="view-btn" type="button" data-report-id="${esc(r.id)}"><i class="fa-solid fa-eye"></i> عرض</button></div>`).join("")}</div></details>`}).join("")}</div></details>`).join("")}</div></details>`).join("");
+        document.getElementById("adminReportTree").innerHTML=html||'<div class="table-empty">لا توجد تقارير مطابقة</div>';
+        document.querySelectorAll("[data-report-id]").forEach(btn=>btn.addEventListener("click",()=>{const r=reportsData.find(x=>String(x.id)===btn.dataset.reportId);if(r)openPdf(urlOf(r),"تقرير "+(r.employeeName||""));}));
     };
     ["searchName","searchWeek"].forEach(id=>document.getElementById(id).addEventListener("input",render));
-    ["searchDepartment","searchDate"].forEach(id=>document.getElementById(id).addEventListener("change",render));
-    document.getElementById("clearReportFilters").onclick=()=>{["searchName","searchWeek","searchDate"].forEach(id=>document.getElementById(id).value="");document.getElementById("searchDepartment").value="";render();};
+    document.getElementById("searchDate").addEventListener("change",render);
+    document.getElementById("clearReportFilters").onclick=()=>{["searchName","searchWeek","searchDate"].forEach(id=>document.getElementById(id).value="");render();};
     render();
 }
 
