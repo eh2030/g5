@@ -24,11 +24,18 @@
             return;
         }
 
-        // Google Drive قد يمنع عرض المعاينة داخل iframe؛ افتح الملف مباشرة.
-        const opened = window.open(target, "_blank", "noopener,noreferrer");
-        if (!opened) {
-            window.location.href = target;
-        }
+        const modal = document.getElementById("employeePdfModal");
+        const frame = document.getElementById("employeePdfFrame");
+        const titleEl = document.getElementById("employeePdfTitle");
+        if (!modal || !frame) { window.open(target, "_blank", "noopener,noreferrer"); return; }
+        const fileMatch = target.match(/\/file\/d\/([^/]+)/);
+        const idMatch = target.match(/[?&]id=([^&]+)/);
+        const fileId = fileMatch ? fileMatch[1] : (idMatch ? idMatch[1] : "");
+        frame.src = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : target;
+        if (titleEl) titleEl.textContent = title || "عرض التقرير";
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("pdf-viewer-open");
     }
 
     function closePdf() {
