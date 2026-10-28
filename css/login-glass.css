@@ -1,5 +1,5 @@
 /* W1 Login - glassmorphism layer */
-.login-page{background:#102b75 url('../assets/lm2.png') center/cover no-repeat!important}
+.login-page{background:#102b75 url('../assets/lm2.PNG') center/cover no-repeat!important}
 .login-page:before{background:linear-gradient(135deg,rgba(7,43,103,.18),rgba(10,39,100,.08))!important}
 .login-card{background:rgba(255,255,255,.26)!important;border:1px solid rgba(255,255,255,.58)!important;border-radius:32px!important;box-shadow:0 28px 90px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.55)!important;backdrop-filter:blur(18px) saturate(125%)!important;-webkit-backdrop-filter:blur(18px) saturate(125%)!important}
 .card-logo{background:transparent!important;padding:0!important;box-shadow:none!important}
