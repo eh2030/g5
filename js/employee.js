@@ -659,6 +659,43 @@ async function checkUploadPermission() {
    Previous Reports
 ========================== */
 
+/* قراءة تاريخ الرفع بصيغ Google Sheets المختلفة */
+function parseReportUploadDate(value) {
+    if (value === null || value === undefined || value === "") return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+    if (typeof value === "number" || /^\d+(\.\d+)?$/.test(String(value).trim())) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return null;
+        if (n > 100000000000) {
+            const d = new Date(n);
+            return Number.isNaN(d.getTime()) ? null : d;
+        }
+        if (n > 20000 && n < 100000) {
+            const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+            return Number.isNaN(d.getTime()) ? null : d;
+        }
+    }
+
+    const s = String(value).trim()
+        .replace(/[٠-٩]/g, x => String("٠١٢٣٤٥٦٧٨٩".indexOf(x)))
+        .replace(/[۰-۹]/g, x => String("۰۱۲۳۴۵۶۷۸۹".indexOf(x)));
+
+    let d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d;
+
+    const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|ص|م)?)?$/i);
+    if (!m) return null;
+    const day = Number(m[1]), month = Number(m[2]) - 1, year = Number(m[3]);
+    let hour = Number(m[4] || 0);
+    const minute = Number(m[5] || 0), second = Number(m[6] || 0);
+    const period = String(m[7] || "").toUpperCase();
+    if (period === "PM" || period === "م") hour = hour % 12 + 12;
+    else if (period === "AM" || period === "ص") hour %= 12;
+    d = new Date(year, month, day, hour, minute, second);
+    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day ? d : null;
+}
+
 async function loadReports() {
 
     const result =
